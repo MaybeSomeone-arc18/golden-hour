@@ -1,5 +1,9 @@
 # golden-hour
 
+**live demo:** https://maybesomeone-arc18.github.io/golden-hour/demo/standalone.html
+
+**write-up:** https://dev.to/sansk_ya/golden-hour-a-go-outside-planner-where-a-small-local-gemma-cannot-invent-numbers-3ol5
+
 a tiny offline-friendly "go outside" planner. it looks at a free forecast, picks the best hour for a walk with plain rules, and a small local Gemma writes one friendly sentence about it.
 
 ```
