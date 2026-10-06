@@ -1,0 +1,8 @@
+case                                          first check      now   (share of 400 flagged as bad; correct row = accepted)
+correct sentence (should be accepted)                100%     100%
+wrong number                                          95%     100%
+right numbers, wrong labels                            0%     100%
+temperature equals the start hour                      0%      99%
+wrong day word                                         0%     100%
+invented 'sunny'                                       0%     100%
+weather word the facts contradict                      0%     100%
