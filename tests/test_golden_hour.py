@@ -26,3 +26,36 @@ class Fake:
     def create_chat_completion(s, **k): return {"choices": [{"message": {"content": s.t}}]}
 def test_make_falls_back_on_bad_number(): assert make(F, "Pune", Fake("It is 30C, go!"))[1] == "template"
 def test_make_uses_model_when_valid(): assert make(F, "Pune", Fake("Go at 17:00, 14C and calm."))[1] == "gemma"
+
+from golden_hour.scorer import penalties, why
+def test_penalties_sum_matches_comfort():
+    x = h("x", temp=30, rain=40, wind=25)
+    assert comfort(x) == 100 - sum(penalties(x).values())
+def test_why_names_biggest_loss():
+    assert "rain" in why([h("x", rain=90)]) and "temperature" not in why([h("x", rain=90)])
+def test_why_says_nothing_lost_for_perfect_hour(): assert why([h("x")]).startswith("nothing cost")
+def test_validator_rejects_temp_equal_to_start_hour():
+    f = {"start": "2026-10-07T06:00", "temp": 21, "rain_prob": 9, "wind": 6, "day": "tomorrow"}
+    assert not valid("Go tomorrow at 06:00, it is 6C.", f)
+def test_validator_rejects_wrong_day_and_invented_sun():
+    f = {"start": "2026-10-07T06:00", "temp": 21, "rain_prob": 9, "wind": 6, "day": "tomorrow"}
+    assert not valid("Go today at 06:00, 21C.", f) and not valid("A sunny walk at 06:00, 21C.", f)
+def test_validator_accepts_bare_hour_after_at():
+    f = {"start": "2026-10-07T06:00", "temp": 21, "rain_prob": 9, "wind": 6, "day": "tomorrow"}
+    assert valid("Go tomorrow at 6, about 21C.", f)
+
+def test_poor_day_says_so_and_skips_model():
+    f = {"start": "2026-10-07T18:00", "temp": 22, "rain_prob": 92, "wind": 14, "day": "today", "score": 41}
+    text, src = make(f, "Nairobi", Fake("Enjoy a lovely walk at 18:00, 22C!"))
+    assert src == "template" and text.startswith("No good window")
+
+def test_validator_accepts_12_hour_time_for_same_moment():
+    f = {"start": "2026-10-07T18:00", "temp": 16, "rain_prob": 2, "wind": 23, "day": "tomorrow"}
+    assert valid("Go tomorrow at 6:00 PM, 16C.", f) and not valid("Go tomorrow at 6:00 AM, 16C.", f)
+def test_validator_rejects_light_rain_when_rain_chance_is_2():
+    f = {"start": "2026-10-07T18:00", "temp": 16, "rain_prob": 2, "wind": 23, "day": "tomorrow"}
+    assert not valid("Go tomorrow at 18:00, 16C and light rain.", f)
+
+def test_light_rain_chance_is_a_description_not_a_claim_of_rain():
+    f = {"start": "2026-10-07T18:00", "temp": 16, "rain_prob": 12, "wind": 5, "day": "tomorrow"}
+    assert valid("Go tomorrow at 18:00, 16C with a light rain chance.", f)
