@@ -1,0 +1,1 @@
+max difference between JS and Python score over 2000 random hours: 2.13e-14
