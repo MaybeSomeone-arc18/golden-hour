@@ -11,6 +11,11 @@ score per hour starts at 100 and loses points:
 | UV above 5 | 6 points per index point over |
 | night | 25 flat |
 
-clamped to 0-100. a walk of N minutes averages the hours it touches (rounded up). the best start hour in the next 24 is picked.
+clamped to 0-100. a walk of N minutes averages the hours it touches (rounded up). the best start hour in the next 24 is picked. if the best score is under 60 the app says there is no good window and shows the least bad one instead of cheering.
 
-these weights are my judgment, not fitted to survey data. they were only sanity checked against forecasts for 20 cities (see eval/), not against what people actually enjoy.
+the `why` line lists the (up to) two factors that cost the most points, if any cost 3 or more.
+
+## how far to trust the weights
+the weights are my judgment. they are not fitted to what people enjoy. what i did measure (`eval/sensitivity.py`): scale every weight randomly between 0.7x and 1.3x and re-pick. over 3000 re-picks (20 cities x 3 walk lengths x 50 weight sets) the pick stayed the same hour 92% of the time and within an hour 95% of the time; it moved more than 2 hours in 3%. those were mostly Sydney and Chennai, where two hours score almost the same.
+
+that says the pick is stable against small changes in my taste. it does not say the weights match yours.
