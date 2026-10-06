@@ -5,9 +5,9 @@
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 Georgia,serif}
 main{max-width:640px;margin:0 auto;padding:48px 20px}
 h1{font-size:34px;margin:0 0 6px;letter-spacing:-.5px}p.sub{color:var(--mut);margin:0 0 28px}
-form{display:flex;gap:8px}input{flex:1;padding:12px;border:1px solid #cfc9b8;background:#fff;font:inherit;border-radius:6px}
-button{padding:12px 18px;border:0;background:var(--ink);color:#fff;border-radius:6px;font:inherit;cursor:pointer}
-#out{margin-top:28px}.big{font-size:44px;color:var(--acc);margin:0}.facts{color:var(--mut);font:14px ui-monospace,monospace}
+form{display:flex;gap:8px;flex-wrap:wrap}input{flex:1;min-width:150px;padding:12px;border:1px solid #cfc9b8;background:#fff;font:inherit;border-radius:6px}
+select{padding:12px;border:1px solid #cfc9b8;background:#fff;font:inherit;border-radius:6px}button{padding:12px 18px;border:0;background:var(--ink);color:#fff;border-radius:6px;font:inherit;cursor:pointer}
+#out{margin-top:28px}.big{font-size:44px;color:var(--acc);margin:0}.why{color:#1d2a1f;font-size:15px;margin:4px 0 0}.facts{color:var(--mut);font:14px ui-monospace,monospace}
 .bar{display:flex;gap:2px;align-items:flex-end;height:70px;margin:18px 0 4px}.bar i{flex:1;background:#d9d2bd;border-radius:2px 2px 0 0}.bar i.b{background:var(--acc)}
 h2{font-size:16px;margin:40px 0 8px;color:var(--mut);font-weight:normal;text-transform:uppercase;letter-spacing:1px}
 .s{border-top:1px solid #d9d2bd;padding:10px 0;font-size:15px}.s b{font-weight:normal;color:var(--mut)}
@@ -16,7 +16,7 @@ small{color:var(--mut)}
 <main>
 <h1>golden-hour</h1>
 <p class="sub">the best hour to go outside in the next 24, from a free forecast and plain rules.</p>
-<form id="f"><input id="q" placeholder="a city, e.g. Bengaluru" value="Bengaluru"><button>find</button></form>
+<form id="f"><input id="q" placeholder="a city, e.g. Bengaluru" value="Bengaluru"><select id="m"><option value="30">30 min</option><option value="60" selected>60 min</option><option value="120">2 hours</option></select><button>find</button></form>
 <div id="out"></div>
 <h2>sentences from local Gemma 3 1B</h2>
 <p><small>precomputed on my machine, not generated in your browser. numbers were validated against the forecast facts they were written from. the picker above is the same scoring rules in JS.</small></p>
@@ -24,18 +24,25 @@ small{color:var(--mut)}
 <p><small>not field tested. weights are my judgment. <a href="https://github.com/MaybeSomeone-arc18/golden-hour">code</a></small></p>
 </main>
 <script>
-const SAMPLES=[{"city": "Bengaluru", "day": "tomorrow", "start": "07:00", "text": "Please go for a walk tomorrow at 07:00 in Bengaluru with a temperature of 21C and a 9% rain chance.", "src": "gemma"}, {"city": "Mumbai", "day": "tomorrow", "start": "07:00", "text": "Please go for a walk tomorrow at 07:00 in Mumbai with a temperature of 27C and a 0% chance of rain.", "src": "gemma"}, {"city": "Delhi", "day": "tomorrow", "start": "06:00", "text": "Please go for a walk tomorrow at 06:00, with a temperature of 23C and a 0% rain chance.", "src": "gemma"}, {"city": "Pune", "day": "tomorrow", "start": "06:00", "text": "Please go for a walk tomorrow at 06:00, with a temperature of 22C and a 0% chance of rain.", "src": "gemma"}, {"city": "Chennai", "day": "today", "start": "08:00", "text": "Today, go for a walk in Chennai at 08:00, enjoying the 29C temperature and light rain chance.", "src": "gemma"}, {"city": "Kolkata", "day": "tomorrow", "start": "06:00", "text": "Go tomorrow at 06:00 in Kolkata: 27C, dry, wind 3 km/h.", "src": "template"}];
+const SAMPLES=[{"city": "Bengaluru", "day": "tomorrow", "start": "09:00", "text": "Please go for a walk tomorrow at 09:00, with a temperature of 24C and a 18% rain chance.", "src": "gemma"}, {"city": "Mumbai", "day": "tomorrow", "start": "07:00", "text": "Please go for a walk tomorrow at 07:00 in Mumbai with a temperature of 27C and a 0% chance of rain.", "src": "gemma"}, {"city": "Delhi", "day": "tomorrow", "start": "06:00", "text": "Please go for a walk tomorrow at 06:00, with a temperature of 25C and a 0% chance of rain.", "src": "gemma"}, {"city": "Pune", "day": "tomorrow", "start": "06:00", "text": "Please go for a walk tomorrow at 06:00, with a temperature of 22C and a 0% chance of rain.", "src": "gemma"}, {"city": "Chennai", "day": "tomorrow", "start": "06:00", "text": "Please go for a walk tomorrow at 6:00 AM, with a 27C temperature and a 18% rain chance.", "src": "gemma"}, {"city": "Kolkata", "day": "tomorrow", "start": "06:00", "text": "Please go for a walk tomorrow at 06:00, with a temperature of 27C and a 0% chance of rain.", "src": "gemma"}, {"city": "Sydney (rejected)", "day": "", "start": "", "text": "Gemma wrote: \"Please go for a walk tomorrow at 6:00 PM in Sydney, enjoying the 16C temperature and light rain.\" (rain chance was 2%, so it was replaced by the template line)", "src": "validator"}];
 document.getElementById('samples').innerHTML=SAMPLES.map(x=>`<div class="s"><b>${x.city} (${x.src})</b><br>${x.text}</div>`).join('');
-function comfort(h){let s=100;s-=h.t<18?(18-h.t)*3:Math.max(0,h.t-24)*5;s-=h.r*.6;s-=Math.max(0,h.w-15)*1.5;s-=Math.max(0,h.uv-5)*6;if(!h.day)s-=25;return Math.max(0,Math.min(100,s))}
+function pen(h){return{temp:h.t<18?(18-h.t)*3:Math.max(0,h.t-24)*5,rain:h.r*.6,wind:Math.max(0,h.w-15)*1.5,uv:Math.max(0,h.uv-5)*6,night:h.day?0:25}}
+function comfort(h){const p=pen(h);return Math.max(0,Math.min(100,100-p.temp-p.rain-p.wind-p.uv-p.night))}
+const NAMES={temp:'temperature outside 18-24C',rain:'rain chance',wind:'wind',uv:'UV',night:'darkness'};
+function why(w){const tot={};for(const k of Object.keys(NAMES))tot[k]=w.reduce((a,x)=>a+pen(x)[k],0)/w.length;
+const lost=Object.entries(tot).filter(e=>e[1]>=3).sort((a,b)=>b[1]-a[1]).slice(0,2);
+return lost.length?'lost points to '+lost.map(e=>`${NAMES[e[0]]} (-${Math.round(e[1])})`).join(', '):'nothing cost more than 3 points: mild, dry, calm, daylight'}
 async function go(e){e&&e.preventDefault();const o=document.getElementById('out');o.textContent='looking...';
 try{const g=await (await fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&name='+encodeURIComponent(q.value))).json();
 if(!g.results){o.textContent='no such place';return}const c=g.results[0];
 const a=await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.latitude}&longitude=${c.longitude}&hourly=temperature_2m,precipitation_probability,wind_speed_10m,uv_index,is_day&forecast_days=2&timezone=auto`)).json();
 const H=a.hourly,hours=H.time.map((t,i)=>({time:t,t:H.temperature_2m[i],r:H.precipitation_probability[i]||0,w:H.wind_speed_10m[i],uv:H.uv_index[i]||0,day:!!H.is_day[i]}));
 const nowLocal=new Date(Date.now()+a.utc_offset_seconds*1000).toISOString().slice(0,13)+':00';
-const c24=hours.filter(h=>h.time>=nowLocal).slice(0,24);let best=c24[0];c24.forEach(h=>{if(comfort(h)>comfort(best))best=h});
-const mx=Math.max(...c24.map(comfort),1);
-o.innerHTML=`<p class="big">${best.time.slice(11,16)}</p><div class="facts">${c.name} &middot; score ${Math.round(comfort(best))}/100 &middot; ${Math.round(best.t)}C &middot; rain ${best.r}% &middot; wind ${Math.round(best.w)} km/h &middot; UV ${best.uv.toFixed(1)}</div><div class="bar">${c24.map(h=>`<i class="${h===best?'b':''}" style="height:${Math.max(3,comfort(h)/mx*100)}%" title="${h.time.slice(11,16)}"></i>`).join('')}</div><small>next 24 hours, local time. 60 minute walk.</small>`}
+const span=Math.max(1,Math.ceil(+m.value/60));const c24=hours.filter(h=>h.time>=nowLocal).slice(0,24);
+const wins=c24.map(h=>{const k=hours.indexOf(h);return hours.slice(k,k+span)}).filter(w=>w.length==span);
+const sc=w=>w.reduce((a,x)=>a+comfort(x),0)/span;let bw=wins[0];wins.forEach(w=>{if(sc(w)>sc(bw))bw=w});
+const best=bw[0],bt=Math.round(bw.reduce((a,x)=>a+x.t,0)/span),br=Math.max(...bw.map(x=>x.r)),bwind=Math.round(Math.max(...bw.map(x=>x.w))),buv=Math.max(...bw.map(x=>x.uv));
+o.innerHTML=`<p class="big">${best.time.slice(11,16)}</p><div class="facts">${c.name} &middot; score ${Math.round(sc(bw))}/100 &middot; ${bt}C &middot; rain ${br}% &middot; wind ${bwind} km/h &middot; UV ${buv.toFixed(1)}</div><div class="why">${sc(bw)<60?"<b>no good window in the next 24 hours.</b> this is the least bad one. ":""}${why(bw)}</div><div class="bar">${wins.map(w=>`<i class="${w===bw?'b':''}" style="height:${Math.max(3,sc(w))}%" title="${w[0].time.slice(11,16)}: ${Math.round(sc(w))}"></i>`).join('')}</div><small>score of a ${m.value}-minute walk starting at each of the next 24 hours, local time, bar height = score out of 100.</small>`}
 catch(err){o.textContent='forecast failed: '+err}}
-f.addEventListener('submit',go);go();
+f.addEventListener('submit',go);m.addEventListener('change',()=>go());go();
 </script></html>
