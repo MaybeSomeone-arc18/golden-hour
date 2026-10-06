@@ -26,7 +26,7 @@ def main():
         llm = Llama(model_path=a.model, n_ctx=1024, n_threads=2, verbose=False)
     f['day'] = 'today' if f['start'][:10] == now[:10] else 'tomorrow'
     text, src = make(f, a.place, llm)
-    print(text); print(f"[{src}] score {f['score']}/100, UV {f['uv']}, daylight {f['daylight']}")
+    print(text); print(f"[{src}] score {f['score']}/100, UV {f['uv']}, daylight {f['daylight']}; {f['why']}")
 
 if __name__ == "__main__":
     main()
